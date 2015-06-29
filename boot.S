@@ -26,7 +26,7 @@ ELF_HEADER_2		=   0x00000000
 ELF_HEADER_3		=   0x00000000
 ELF_HEADER_4		=   0x00030002
 ELF_HEADER_VERSION	=   0x00000001
-ELF_HEADER_ENTRY	=   LOADBASE + multiboot_entry + VOFFSET
+ELF_HEADER_ENTRY	=   _start
 ELF_HEADER_PHOFF	=   0x00000034
 ELF_HEADER_SHOFF	=   0x00000000
 ELF_HEADER_FLAGS	=   0x00000000
@@ -35,15 +35,16 @@ ELF_HEADER_NPH		=   0x00000002
 ELF_HEADER_NSH		=   0x00000000
 
 ELF_PHTEXT_TYPE		=   0x00000001
-ELF_PHTEXT_OFFSET	=   multiboot_entry
-ELF_PHTEXT_VADDR	=   LOADBASE + multiboot_entry + VOFFSET
-ELF_PHTEXT_PADDR	=   LOADBASE + multiboot_entry
-ELF_PHTEXT_SZ		=   0
+ELF_PHTEXT_OFFSET	=   0
+/* ELF_PHTEXT_VADDR	=   LOADBASE + multiboot_entry + VOFFSET */
+/* ELF_PHTEXT_PADDR	=   LOADBASE + multiboot_entry */
+/* ELF_PHTEXT_SZ		=   FILESIZE */
+ELF_PHTEXT_SZ       =   0x20000
 ELF_PHTEXT_FLAGS	=   0x00000005
 ELF_PHTEXT_ALIGN	=   0x00001000
 
 ELF_PHDATA_TYPE		=   0x00000001
-ELF_PHDATA_OFFSET	=   _edata
+ELF_PHDATA_OFFSET	=   0
 ELF_PHDATA_VADDR	=   LOADBASE + _edata + VOFFSET
 ELF_PHDATA_PADDR	=   LOADBASE + _edata
 ELF_PHDATA_SZ		=   0
@@ -54,11 +55,12 @@ ELF_PHDATA_ALIGN	=   0x00001000
 	.text
 
 	.code32
-	.globl	start, _start
+	.globl	phdr, ehdr, start, _start
 
 	/* This entry is not used actually.  */
-start:
-_start:
+ehdr: 
+    .set EH_POS, ehdr
+    .set PHOFF, phdr - ehdr
     .long ELF_HEADER_MAGIC
     .long ELF_HEADER_1
     .long ELF_HEADER_2
@@ -66,32 +68,28 @@ _start:
     .long ELF_HEADER_4
     .long ELF_HEADER_VERSION
     .long ELF_HEADER_ENTRY
-    .long ELF_HEADER_PHOFF
-    .long ELF_HEADER_SHOFF
-    .long ELF_HEADER_FLAGS
-    .long ELF_HEADER_EPHSZ
-    .long ELF_HEADER_NPH
-    .long ELF_HEADER_NSH
+    .long PHOFF
+    .long 0
+    .long 0
+    .short 52
+    .short 32
+    .short 1
+    .short 0
+    .short 0
+    .short 0
+    /* .long ELF_HEADER_EPHSZ */
+    /* .long ELF_HEADER_NPH */
+    /* .long ELF_HEADER_NSH */
 
+phdr:
     .long ELF_PHTEXT_TYPE
     .long ELF_PHTEXT_OFFSET
-    .long ELF_PHTEXT_VADDR
-    .long ELF_PHTEXT_PADDR
+    .long EH_POS
+    .long EH_POS
     .long ELF_PHTEXT_SZ
     .long ELF_PHTEXT_SZ
     .long ELF_PHTEXT_FLAGS
     .long ELF_PHTEXT_ALIGN
-    .long
-    .long ELF_PHDATA_TYPE
-    .long ELF_PHDATA_OFFSET
-    .long ELF_PHDATA_VADDR
-    .long ELF_PHDATA_PADDR
-    .long ELF_PHDATA_SZ
-    .long ELF_PHDATA_SZ
-    .long ELF_PHDATA_FLAGS
-    .long ELF_PHDATA_ALIGN
-        
-	
 	/* Align 32 bits boundary.  */
 	.align	4
 	
@@ -104,16 +102,19 @@ multiboot_header:
 	/* checksum */
 	.long	-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 	/* header_addr */
-	.long	multiboot_header
+	.long	LOADBASE + multiboot_header
 	/* load_addr */
-	.long	_start
+	.long	LOADBASE
 	/* load_end_addr */
-	.long	_edata
+	.long	0
 	/* bss_end_addr */
-	.long	_end
+	.long	0
 	/* entry_addr */
-	.long	multiboot_entry
+	.long	LOADBASE + multiboot_entry
+    .align   0x1000
 
+start:
+_start:
 multiboot_entry:
 	/* Initialize the stack pointer.  */
 	movl	$(stack + STACK_SIZE), %esp
@@ -135,3 +136,5 @@ loop:	hlt
 
 	/* Our stack area.  */
 	.comm	stack, STACK_SIZE
+end:
+    .set FILESIZE, end - ehdr

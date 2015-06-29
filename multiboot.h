@@ -21,7 +21,8 @@
 #define MULTIBOOT_HEADER_MAGIC		0x1BADB002
 
 /* The flags for the Multiboot header.  */
-#define MULTIBOOT_HEADER_FLAGS		0x00010003
+#define MULTIBOOT_HEADER_FLAGS		0x00000003
+//#define MULTIBOOT_HEADER_FLAGS		0x0000
 
 /* The magic number passed by a Multiboot-compliant boot loader.  */
 #define MULTIBOOT_BOOTLOADER_MAGIC	0x2BADB002

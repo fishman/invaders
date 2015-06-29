@@ -16,5 +16,5 @@ ${CC} $CFLAGS -c video.c
 ${CC} $CFLAGS -c memory.c
 ${CC} $CFLAGS -c boot.S
 ${CC} $LDFLAGS -o invaders.exec boot.o kernel.o keyboard.o video.o game.o sound.o delay.o common.o memory.o
-# objcopy -O elf32-i386 invaders.exec invaders
+objcopy -O elf32-i386 invaders.exec invaders.elf
 objcopy -O binary invaders.exec invaders
